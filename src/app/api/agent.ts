@@ -55,6 +55,12 @@ const requests = {
 const Search = {
   global: (query: string) => requests.get('search/global', new URLSearchParams({ query })),
   local: (query: string) => requests.get('search/local', new URLSearchParams({ query })),
+  drift: (query: string) => requests.get('search/drift', new URLSearchParams({ query })),
+};
+
+const Chat = {
+  // New method to edit the cover letter via chat.
+  editCoverLetter: (payload: {}) => requests.post('cover-letter/edit', payload)
 };
 
 const Status = {
@@ -63,6 +69,7 @@ const Status = {
 
 const agent = {
   Search,
+  Chat,      // Added Chat to the exported agent object.
   Status,
 };
 
