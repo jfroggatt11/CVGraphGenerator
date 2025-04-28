@@ -1,4 +1,3 @@
-// GraphContextQuery.tsx
 import React, { useState } from "react";
 import {
   Drawer,
@@ -30,25 +29,38 @@ const GraphContextQuery: React.FC<GraphContextQueryProps> = ({
   const handleSearch = async () => {
     setLoading(true);
     try {
-      // Use your existing graph search endpoint, e.g., using the local search method.
+      // Call the local search API endpoint.
       const response = await agent.Search.local(query);
-      // Here we assume the response is an array of search results.
-      setResults(response || []);
+      // Graphrag returns context_data as an object of arrays. Flatten it:
+      const data = response.context_data;
+      let resultsArray: any[] = [];
+      if (Array.isArray(data)) {
+        resultsArray = data;
+      } else if (data && typeof data === 'object') {
+        Object.values(data).forEach((arr) => {
+          if (Array.isArray(arr)) {
+            resultsArray.push(...arr);
+          }
+        });
+      } else {
+        console.warn("Unexpected context_data format", data);
+      }
+      setResults(resultsArray);
     } catch (error) {
       console.error("Error searching graph context:", error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleMerge = () => {
-    // For demonstration purposes, we assume merging simply involves concatenating result names.
-    // You can enhance this logic by allowing multiple selections.
+    // Convert the array of results into a merged string.
     const contextInfo = results
       .map((r) => r.name || JSON.stringify(r))
       .join("\n");
     onMerge(contextInfo);
-    // Optionally, clear the state and close the drawer.
+    // Clear state and close drawer
     setResults([]);
     setQuery("");
     toggleDrawer(false)();
@@ -61,7 +73,7 @@ const GraphContextQuery: React.FC<GraphContextQueryProps> = ({
       onClose={toggleDrawer(false)}
       sx={{ zIndex: 1600 }}
     >
-      <Box sx={{ width: "40vw", padding: 2 }}>
+      <Box sx={{ width: "60vw", padding: 2, paddingTop: 6, position: "relative" }}>
         <Typography variant="h6">Query Graph Context</Typography>
         <TextField
           value={query}
@@ -70,20 +82,30 @@ const GraphContextQuery: React.FC<GraphContextQueryProps> = ({
           fullWidth
           margin="normal"
         />
-        <Button variant="contained" onClick={handleSearch} disabled={loading}>
+        <Button
+          variant="contained"
+          onClick={handleSearch}
+          disabled={loading || !query.trim()}
+        >
           {loading ? "Searching..." : "Search"}
         </Button>
         <List>
           {results.map((result, index) => (
             <ListItem key={index}>
               <ListItemText
-                primary={result.name || "No Name"}
-                secondary={result.description || ""}
+                primary={result.name || "Unnamed Item"}
+                secondary={result.description || JSON.stringify(result)}
               />
             </ListItem>
           ))}
         </List>
-        <Button variant="contained" color="primary" onClick={handleMerge} sx={{ mt: 2 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleMerge}
+          disabled={results.length === 0}
+          sx={{ mt: 2 }}
+        >
           Merge Graph Context
         </Button>
       </Box>
