@@ -63,11 +63,8 @@ const GraphDataHandler: React.FC = () => {
   const hasCovariates = covariates.length > 0;
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      loadDefaultFiles();
-    }
-    // eslint-disable-next-line
-  }, []);
+    loadDefaultFiles();
+  }, [loadDefaultFiles]);
 
   useEffect(() => {
     const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
