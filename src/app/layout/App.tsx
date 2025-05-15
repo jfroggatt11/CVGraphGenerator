@@ -86,7 +86,7 @@ const App: React.FC = () => {
           >
             <IconButton
               component={Link}
-              href="https://github.com/noworneverev/graphrag-visualizer"
+              href="https://github.com/jfroggatt11/CVGraphGenerator"
               target="_blank"
               rel="noopener"
               color="inherit"
