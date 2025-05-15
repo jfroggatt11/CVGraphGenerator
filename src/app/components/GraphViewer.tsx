@@ -28,7 +28,7 @@ import {
   CSS2DObject,
 } from "three/examples/jsm/renderers/CSS2DRenderer";
 import * as THREE from "three";
-import { Renderer } from "three";
+// import { Renderer } from "three";
 import SearchDrawer from "./SearchDrawer";
 import DetailDrawer from "./DetailDrawer";
 import APISearchDrawer from "./APISearchDrawer";
@@ -110,8 +110,8 @@ const GraphViewer: React.FC<GraphViewerProps> = ({
   const [showLabels, setShowLabels] = useState(false);
   const [showLinkLabels, setShowLinkLabels] = useState(false);
   const [showHighlight, setShowHighlight] = useState(true);
-  const graphRef = useRef<any>();
-  const extraRenderers = [new CSS2DRenderer() as any as Renderer];
+  const graphRef = useRef<any>(null);
+  const extraRenderers = [ new CSS2DRenderer() ];
   const nodeCount = data.nodes.length;
   const linkCount = data.links.length;
 
