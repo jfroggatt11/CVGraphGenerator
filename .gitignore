@@ -25,3 +25,5 @@ yarn-error.log*
 .env
 
 /public/artifacts
+# Local Netlify folder
+.netlify
