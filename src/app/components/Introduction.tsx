@@ -50,7 +50,7 @@ const Introduction: React.FC = () => {
 
       <Box
         component="img"
-        src={process.env.PUBLIC_URL + "/demo.png"}
+        src="/demo.png"
         alt="Demo"
         sx={{ mt: 2, mb: 2, width: "100%" }}
       />
@@ -105,7 +105,7 @@ const Introduction: React.FC = () => {
 
       <Box
         component="img"
-        src={process.env.PUBLIC_URL + "/search.png"}
+        src="/search.png"
         alt="Search"
         sx={{ mt: 2, mb: 2, width: "100%" }}
       />

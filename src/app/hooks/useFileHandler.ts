@@ -62,30 +62,34 @@ const useFileHandler = () => {
 
     for (const file of files) {
       const fileName =
-        typeof file === "string" ? file.split("/").pop()! : file.name;      
+        typeof file === "string" ? file.split("/").pop()! : file.name;
       const schema = fileSchemas[fileName] || fileSchemas[`create_final_${fileName}`];
 
       let data;
       if (typeof file === "string") {
-        // Fetch default file from public folder as binary data
+        // Fetch default file as before...
         const response = await fetch(file);
         if (!response.ok) {
           console.error(`Failed to fetch file ${file}: ${response.statusText}`);
           continue;
         }
-
-        // Convert ArrayBuffer to File object
         const buffer = await response.arrayBuffer();
         const blob = new Blob([buffer], { type: "application/x-parquet" });
         const fileBlob = new File([blob], fileName);
-
-        // Use the File object in readParquetFile
-        data = await readParquetFile(fileBlob, schema);
-        // console.log(`Successfully loaded ${fileName} from public folder`);
+        try {
+          data = await readParquetFile(fileBlob, schema);
+        } catch (err) {
+          console.warn(`Error reading Parquet file ${file}:`, err);
+          continue;
+        }
       } else {
-        // Handle drag-and-drop files directly
-        data = await readParquetFile(file, schema);
-        // console.log(`Successfully loaded ${file.name} from drag-and-drop`);
+        // Handle drag-and-drop files
+        try {
+          data = await readParquetFile(file, schema);
+        } catch (err) {
+          console.warn(`Error reading Parquet file ${file.name}:`, err);
+          continue;
+        }
       }
 
       if (schema === "entity") {
@@ -120,26 +124,11 @@ const useFileHandler = () => {
         method: "HEAD",
         cache: "no-store",
       });
-
-      if (response.ok) {
-        const contentType = response.headers.get("Content-Type");
-
-        if (contentType === "application/octet-stream") {
-          // Updated Content-Type check
-          console.log(`File exists: ${filePath}`);
-          return true;
-        } else {
-          // console.warn(
-          //   `File does not exist or incorrect type: ${filePath} (Content-Type: ${contentType})`
-          // );
-          return false;
-        }
-      } else {
-        console.warn(
-          `File does not exist: ${filePath} (status: ${response.status})`
-        );
+      if (!response.ok) {
+        console.warn(`File not found: ${filePath} (status: ${response.status})`);
         return false;
       }
+      return true;
     } catch (error) {
       console.error(`Error checking file existence for ${filePath}`, error);
       return false;
@@ -149,10 +138,12 @@ const useFileHandler = () => {
   const loadDefaultFiles = async () => {
     const filesToLoad = [];
 
+    // Use Vite public assets base URL
+    const baseUrl = import.meta.env.BASE_URL;
     for (const baseName of baseFileNames) {
-      const prefixedPath = process.env.PUBLIC_URL + `/artifacts/create_final_${baseName}`;
-      const unprefixedPath = process.env.PUBLIC_URL + `/artifacts/${baseName}`;
-  
+      const prefixedPath = `${baseUrl}artifacts/create_final_${baseName}`;
+      const unprefixedPath = `${baseUrl}artifacts/${baseName}`;
+
       if (await checkFileExists(prefixedPath)) {
         filesToLoad.push(prefixedPath);
       } else if (await checkFileExists(unprefixedPath)) {

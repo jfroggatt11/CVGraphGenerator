@@ -1,12 +1,7 @@
-import React, { useEffect, useState } from "react";
-import {
-  HashRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import ReactGA from "react-ga4";
 
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import ReactGA from "react-ga4";
 import GraphDataHandler from "../components/GraphDataHandler";
 import {
   CssBaseline,
@@ -28,9 +23,7 @@ const App: React.FC = () => {
   const paletteType = darkMode ? "dark" : "light";
 
   const theme = createTheme({
-    palette: {
-      mode: paletteType,
-    },
+    palette: { mode: paletteType },
     components: {
       MuiCssBaseline: {
         styleOverrides: {
@@ -39,16 +32,12 @@ const App: React.FC = () => {
       },
       MuiPopover: {
         styleOverrides: {
-          root: {
-            zIndex: 1600,
-          },
+          root: { zIndex: 1600 },
         },
       },
       MuiModal: {
         styleOverrides: {
-          root: {
-            zIndex: 1600,
-          },
+          root: { zIndex: 1600 },
         },
       },
     },
@@ -65,7 +54,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const measurementId = process.env.REACT_APP_GA_MEASUREMENT_ID;
+    const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     if (measurementId) {
       ReactGA.initialize(measurementId);
       ReactGA.send({
@@ -82,7 +71,6 @@ const App: React.FC = () => {
       <Router>
         <Container disableGutters maxWidth={false}>
           <CssBaseline />
-
           <Box
             sx={{
               position: "absolute",
@@ -120,14 +108,12 @@ const App: React.FC = () => {
             )}
           </Box>
           <Routes>
-            <Route path="/" element={<Navigate to="/upload" replace />} />{" "}
-            <Route path="/upload" element={<GraphDataHandler />} />{" "}
-            <Route path="/graph" element={<GraphDataHandler />} />{" "}
-            <Route path="/data" element={<GraphDataHandler />} />{" "}
-            <Route path="*" element={<Navigate to="/upload" replace />} />{" "}
+            <Route path="/" element={<Navigate to="/upload" replace />} />
+            <Route path="/upload" element={<GraphDataHandler />} />
+            <Route path="/graph" element={<GraphDataHandler />} />
+            <Route path="/data" element={<GraphDataHandler />} />
+            <Route path="*" element={<Navigate to="/upload" replace />} />
           </Routes>
-
-          {/* <GraphDataHandler /> */}
         </Container>
       </Router>
     </ThemeProvider>

@@ -63,14 +63,14 @@ const GraphDataHandler: React.FC = () => {
   const hasCovariates = covariates.length > 0;
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env.DEV) {
       loadDefaultFiles();
     }
     // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
-    const measurementId = process.env.REACT_APP_GA_MEASUREMENT_ID;
+    const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     if (measurementId) {
       ReactGA.initialize(measurementId);
     } else {
@@ -193,7 +193,6 @@ const GraphDataHandler: React.FC = () => {
           />
         </Box>
       )}
-
       {tabIndex === 2 && (
         <Box sx={{ display: "flex", height: "calc(100vh - 64px)" }}>
           <DataTableContainer

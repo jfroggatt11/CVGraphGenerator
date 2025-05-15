@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
-// Configure the base URL for the Axios instance
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// Use Vite environment variable in the browser instead of Node's process.env
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 axios.defaults.withCredentials = true;
 
 const responseBody = (response: AxiosResponse) => response.data;
