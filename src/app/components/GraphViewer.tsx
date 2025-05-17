@@ -33,6 +33,7 @@ import SearchDrawer from "./SearchDrawer";
 import DetailDrawer from "./DetailDrawer";
 import APISearchDrawer from "./APISearchDrawer";
 import APIGenerateCoverLetter from "./APIGenerateCoverLetter"; // New import for cover letter generation
+import MCPGenerateCoverLetter from "./MCPGenerateCoverLetter";
 import SpriteText from "three-spritetext";
 import agent from "../api/agent";
 import { SearchResult } from "../models/search-result";
@@ -100,6 +101,11 @@ const GraphViewer: React.FC<GraphViewerProps> = ({
   const [generateCoverLetterAPIDrawerOpen, setGenerateCoverLetterAPIDrawerOpen] = useState(false);
   const toggleGenerateCoverLetterAPIDrawer = (open: boolean) => () => {
     setGenerateCoverLetterAPIDrawerOpen(open);
+  };
+  // MCP cover letter generator drawer state
+  const [generateCoverLetterMCPDrawerOpen, setGenerateCoverLetterMCPDrawerOpen] = useState(false);
+  const toggleGenerateCoverLetterMCPDrawer = (open: boolean) => () => {
+    setGenerateCoverLetterMCPDrawerOpen(open);
   };
 
   const [bottomDrawerOpen, setBottomDrawerOpen] = useState(false);
@@ -511,6 +517,12 @@ const GraphViewer: React.FC<GraphViewerProps> = ({
           >
             Generate Cover Letter (via API)
           </Button>
+          <Button
+            variant="contained"
+            onClick={toggleGenerateCoverLetterMCPDrawer(true)}
+          >
+            Generate Cover Letter (via MCP)
+          </Button>
           <Tooltip title={isFullscreen ? "Exit Full Screen" : "Full Screen"}>
             <IconButton onClick={onToggleFullscreen} color="inherit">
               {isFullscreen ? <FullscreenExitIcon /> : <FullscreenIcon />}
@@ -637,9 +649,16 @@ const GraphViewer: React.FC<GraphViewerProps> = ({
 
       {/* Render the new APIGenerateCoverLetter drawer */}
       <APIGenerateCoverLetter
-        drawerOpen={generateCoverLetterAPIDrawerOpen}
-        toggleDrawer={toggleGenerateCoverLetterAPIDrawer}
-      />
+  drawerOpen={generateCoverLetterAPIDrawerOpen}
+  toggleDrawer={toggleGenerateCoverLetterAPIDrawer}
+/>
+
+{generateCoverLetterMCPDrawerOpen && (
+  <MCPGenerateCoverLetter
+    drawerOpen={generateCoverLetterMCPDrawerOpen}
+    toggleDrawer={toggleGenerateCoverLetterMCPDrawer}
+  />
+)}
 
       <DetailDrawer
         bottomDrawerOpen={bottomDrawerOpen}

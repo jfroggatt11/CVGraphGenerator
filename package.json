@@ -6,6 +6,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@modelcontextprotocol/sdk": "^1.11.3",
     "@mui/icons-material": "^7.1.0",
     "@mui/material": "^7.1.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -32,11 +33,11 @@
     "web-vitals": "^5.0.1"
   },
   "scripts": {
-  "start": "vite",
-  "dev":   "vite",
-  "build": "tsc && vite build",
-  "serve": "vite preview"
-},
+    "start": "vite",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "serve": "vite preview"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
