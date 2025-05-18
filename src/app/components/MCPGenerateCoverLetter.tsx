@@ -110,39 +110,25 @@ const MCPGenerateCoverLetter: React.FC<MCPGenerateCoverLetterProps> = ({
 
   // Generate initial cover letter via MCP tool 'local_search'
   const handleGenerate = async () => {
-    console.log("🔍 handleGenerate, client is:", client);
     setError("");
-    // Validate company and title
+    // Validate inputs
     if (!companyName.trim() || !jobTitle.trim()) {
       setError("Please enter Company and Job Title before generating.");
       return;
     }
-    // Ensure we have a usable client instance
-    let activeClient = client;
-    if (!activeClient) {
-      console.log("⚙️ Client not ready, initializing...");
-      setLoading(true);
-      activeClient = await initClient();
-      setLoading(false);
-      if (!activeClient) {
-        setError("Still connecting to the MCP server — please wait a moment.");
-        return;
-      }
-    }
-    // Debug: log resolved URL for the local_search endpoint
-    const callUrl = new URL("local_search", (() => {
-      const base = import.meta.env.VITE_MCP_URL?.replace(/\/$/, "") || "";
-      return base.startsWith("http") ? `${base}/mcp/` : "/mcp/";
-    })());
-    console.log("🔗 Calling local_search at:", callUrl.toString());
     const prompt = `Cover Letter Description: ${coverLetterDescription}\nJob Description: ${jobDescription}`;
     setLoading(true);
     try {
-      // Call MCP local_search tool
-      const result = await activeClient.callTool({
-        name: "local_search",
-        arguments: { query: prompt }
+      // Directly call the local_search endpoint via fetch
+      const resp = await fetch("/mcp/local_search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: prompt }),
       });
+      if (!resp.ok) {
+        throw new Error(`Server returned ${resp.status}`);
+      }
+      const result = await resp.json();
       const letter = result.response as string;
       setGeneratedCoverLetter(letter);
       setEditableCoverLetter(letter);
