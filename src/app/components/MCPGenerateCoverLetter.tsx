@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -75,7 +75,6 @@ const MCPGenerateCoverLetter: React.FC<MCPGenerateCoverLetterProps> = ({
     return client;
   };
 
-
   // Fields for company and job title
   const [companyName, setCompanyName] = useState<string>("");
   const [jobTitle, setJobTitle] = useState<string>("");
@@ -101,8 +100,14 @@ const MCPGenerateCoverLetter: React.FC<MCPGenerateCoverLetterProps> = ({
   const [graphQueryOpen, setGraphQueryOpen] = useState<boolean>(false);
   const toggleGraphQuery = (open: boolean) => () => setGraphQueryOpen(open);
 
+  // Initialize MCP client on mount
+  useEffect(() => {
+    initClient();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleMergeGraphContext = (contextInfo: string) => {
-    setChatHistory(prev => [
+    setChatHistory((prev) => [
       `Graph Context:\n${contextInfo}`,
       ...(prev.length ? prev : [`Job Description:\n${jobDescription}`]),
     ]);
@@ -141,28 +146,44 @@ const MCPGenerateCoverLetter: React.FC<MCPGenerateCoverLetterProps> = ({
     }
   };
 
-  // Edit via chat calling REST fallback (MCP edit placeholder)
+  // Edit via chat calling MCP tool
   const handleSendChat = async () => {
     if (!chatInput.trim()) return;
+    // Build updated conversation history by appending the user’s message
     const newHistory = [...chatHistory, `User: ${chatInput}`];
     setChatHistory(newHistory);
     setLoading(true);
     try {
-      // if MCP tool 'finalize_cover_letter' available, use it, else fallback
       if (client) {
+        // Call the edit_cover_letter MCP tool
         const resp = await client.callTool({
-          name: "finalize_cover_letter",
+          name: "edit_cover_letter",
           arguments: {
-            draft: editableCoverLetter,
-            suggestions: newHistory.filter(m => m.startsWith("User:")),
-          }
+            conversation: newHistory,
+            current_letter: editableCoverLetter,
+          },
         });
-        const updated = resp.final_letter as string;
-        setChatHistory(prev => [...prev, `Bot: ${updated}`]);
+        const updated = resp.updatedLetter as string;
+        setChatHistory((prev) => [...prev, `Bot: ${updated}`]);
+        setEditableCoverLetter(updated);
+      } else {
+        // Fallback: call the REST endpoint directly if the client is not ready
+        const payload = { conversation: newHistory, currentLetter: editableCoverLetter };
+        const resp = await fetch("/mcp/edit_cover_letter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!resp.ok) {
+          throw new Error(`Server returned ${resp.status}`);
+        }
+        const result = await resp.json();
+        const updated = result.updatedLetter as string;
+        setChatHistory((prev) => [...prev, `Bot: ${updated}`]);
         setEditableCoverLetter(updated);
       }
     } catch (err: any) {
-      console.error("Error editing cover letter via MCP:", err);
+      console.error("Error editing cover letter:", err);
       setError("Error updating cover letter. Please try again.");
     } finally {
       setLoading(false);
@@ -171,12 +192,12 @@ const MCPGenerateCoverLetter: React.FC<MCPGenerateCoverLetterProps> = ({
   };
 
   // File save helpers
-  const getDateStr = () => new Date().toISOString().split('T')[0];
+  const getDateStr = () => new Date().toISOString().split("T")[0];
   const saveFile = (content: string, folder: string, suffix: string) => {
     const date = getDateStr();
     const fn = `${companyName.trim()} - ${jobTitle.trim()} - ${suffix} - ${date}.txt`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const el = document.createElement('a');
+    const blob = new Blob([content], { type: "text/plain" });
+    const el = document.createElement("a");
     el.href = URL.createObjectURL(blob);
     el.download = `${folder}/${fn}`;
     document.body.appendChild(el);
@@ -186,51 +207,121 @@ const MCPGenerateCoverLetter: React.FC<MCPGenerateCoverLetterProps> = ({
 
   return (
     <>
-      <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)} sx={{ zIndex:1500 }}>
-        <Box sx={{ width:'50vw', p:2, position:'relative' }}>
-          <IconButton onClick={toggleDrawer(false)} sx={{ position:'absolute', top:8, right:8 }}>
+      <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer(false)} sx={{ zIndex: 1500 }}>
+        <Box sx={{ width: "50vw", p: 2, position: "relative" }}>
+          <IconButton
+            onClick={toggleDrawer(false)}
+            sx={{ position: "absolute", top: 8, right: 8 }}
+          >
             <CloseIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ mb:2 }}>Generate Cover Letter</Typography>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Generate Cover Letter
+          </Typography>
 
-          <TextField fullWidth margin="normal" label="Company Name" value={companyName} onChange={e=>setCompanyName(e.target.value)} />
-          <TextField fullWidth margin="normal" label="Job Title" value={jobTitle} onChange={e=>setJobTitle(e.target.value)} />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Company Name"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Job Title"
+            value={jobTitle}
+            onChange={(e) => setJobTitle(e.target.value)}
+          />
 
           {generatedCoverLetter ? (
             <>
-              <Typography variant="h6" sx={{ mt:2 }}>Generated Cover Letter</Typography>
-              <TextField fullWidth multiline rows={8} margin="normal"
-                value={editableCoverLetter} onChange={e=>setEditableCoverLetter(e.target.value)} />
-              <Box sx={{ display:'flex', gap:2, mt:2 }}>
-                <Button variant="contained" onClick={()=>saveFile(editableCoverLetter,'Cover Letters','Cover Letter')}>Save Cover Letter</Button>
-                <Button variant="contained" color="secondary" onClick={()=>saveFile(jobDescription,'Job Descriptions','Job Description')}>Save Job Description</Button>
-                <Button variant="contained" onClick={toggleGraphQuery(true)}>Query Graph Context</Button>
+              <Typography variant="h6" sx={{ mt: 2 }}>
+                Generated Cover Letter
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={8}
+                margin="normal"
+                value={editableCoverLetter}
+                onChange={(e) => setEditableCoverLetter(e.target.value)}
+              />
+              <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={() => saveFile(editableCoverLetter, "Cover Letters", "Cover Letter")}
+                >
+                  Save Cover Letter
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => saveFile(jobDescription, "Job Descriptions", "Job Description")}
+                >
+                  Save Job Description
+                </Button>
+                <Button variant="contained" onClick={toggleGraphQuery(true)}>
+                  Query Graph Context
+                </Button>
               </Box>
 
-              <Typography variant="h6" sx={{ mt:4 }}>Edit via Chat</Typography>
-              <Paper sx={{ p:2, mt:2, maxHeight:'200px', overflow:'auto' }}>
+              <Typography variant="h6" sx={{ mt: 4 }}>
+                Edit via Chat
+              </Typography>
+              <Paper sx={{ p: 2, mt: 2, maxHeight: "200px", overflow: "auto" }}>
                 <List>
-                  {chatHistory.map((m,i)=><ListItem key={i} disableGutters><ListItemText primary={m} /></ListItem>)}
+                  {chatHistory.map((m, i) => (
+                    <ListItem key={i} disableGutters>
+                      <ListItemText primary={m} />
+                    </ListItem>
+                  ))}
                 </List>
               </Paper>
-              <TextField fullWidth multiline rows={2} margin="normal"
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                margin="normal"
                 placeholder="Type your edit prompt..."
-                value={chatInput} onChange={e=>setChatInput(e.target.value)} />
-              <Button variant="contained" onClick={handleSendChat}
-                disabled={loading||!chatInput.trim()} sx={{ mt:2 }}>
-                {loading ? <CircularProgress size={24}/> : 'Send'}
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+              />
+              <Button
+                variant="contained"
+                onClick={handleSendChat}
+                disabled={loading || !chatInput.trim()}
+                sx={{ mt: 2 }}
+              >
+                {loading ? <CircularProgress size={24} /> : "Send"}
               </Button>
-              {error && <Alert severity="error" sx={{ mt:2 }}>{error}</Alert>}
+              {error && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {error}
+                </Alert>
+              )}
             </>
           ) : (
             <>
-              <TextField fullWidth multiline rows={4} margin="normal"
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                margin="normal"
                 value={coverLetterDescription}
-                onChange={e=>setCoverLetterDescription(e.target.value)} />
-              <TextField fullWidth multiline rows={4} margin="normal"
+                onChange={(e) => setCoverLetterDescription(e.target.value)}
+              />
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                margin="normal"
                 value={jobDescription}
-                onChange={e=>setJobDescription(e.target.value)} />
-              <Button variant="contained" onClick={handleGenerate}
+                onChange={(e) => setJobDescription(e.target.value)}
+              />
+              <Button
+                variant="contained"
+                onClick={handleGenerate}
                 disabled={
                   loading ||
                   !companyName.trim() ||
@@ -238,15 +329,24 @@ const MCPGenerateCoverLetter: React.FC<MCPGenerateCoverLetterProps> = ({
                   !coverLetterDescription.trim() ||
                   !jobDescription.trim()
                 }
-                sx={{ mt:2 }}>
-                {loading ? <CircularProgress size={24}/> : 'Generate Cover Letter'}
+                sx={{ mt: 2 }}
+              >
+                {loading ? <CircularProgress size={24} /> : "Generate Cover Letter"}
               </Button>
-              {error && <Alert severity="error" sx={{ mt:2 }}>{error}</Alert>}
+              {error && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {error}
+                </Alert>
+              )}
             </>
           )}
         </Box>
       </Drawer>
-      <GraphContextQuery open={graphQueryOpen} toggleDrawer={toggleGraphQuery} onMerge={handleMergeGraphContext} />
+      <GraphContextQuery
+        open={graphQueryOpen}
+        toggleDrawer={toggleGraphQuery}
+        onMerge={handleMergeGraphContext}
+      />
     </>
   );
 };
